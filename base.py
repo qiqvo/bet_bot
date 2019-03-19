@@ -50,6 +50,16 @@ def on_view_of_bet_button(update, context):
 	# need to be sent as a msg not as a notif 
 	query.answer("Now send the amount of money you want to bet.")
 
+def my_bets(update, context):
+	for bet_hash in context.user_data['bets']:
+		bet = bets.table[bet_hash]
+		si = bet.short_info()
+
+		msg += si + '\n'
+
+	update.message.reply_text('Pari %s: \n"%s"\nYou may choose one of the variants to bet on:' % (bet_hash, bet.question), reply_markup=reply_markup)
+
+
 ### rewrite 
 def cancel(update, context):
 	user = update.message.from_user
@@ -125,6 +135,7 @@ def main():
 	dp.add_handler(bet_money_handler)
 
 	dp.add_handler(CommandHandler("help", help))
+	dp.add_handler(CommandHandler("my_bets", my_bets))
 
 
 	dp.add_handler(CallbackQueryHandler(on_view_of_bet_button))
@@ -141,12 +152,14 @@ if __name__ == '__main__':
 	main()
 
 
-
-# TODO: check cleaners in the end of the conversations
-# TODO: inline should show the paris this user has created and a button to create a new one
-# TODO: show the number of people how bet and the amounts of money. in public mode: show relative information
-# TODO: add time limit on accepting the bet
 # TODO: edit help msg
+# TODO: check cleaners in the end of the conversations
+
 # TODO: update result and other functional button to the view menu 
-# TODO: menu of all bets by user "context.user_data['bets']"
+
 # TODO: answer to button click should be a msg (in on_view_of_bet_button)
+
+# TODO: send short info with parse_mode=telegram.ParseMode.MARKDOWN
+# TODO: menu of all bets by user "context.user_data['bets']"
+
+# TODO: inline should show the paris this user has created and a button to create a new one
