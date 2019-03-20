@@ -9,60 +9,40 @@ from bot_logging import *
 from Bet import *
 from commands import *
 
-TYPE, BET_QUESTION, DEADLINE, DEADLINE_EXACT, DEADLINE_SHIFT, LOOP = range(6)
+BET_QUESTION, DEADLINE, DEADLINE_EXACT, DEADLINE_SHIFT, LOOP = range(5)
 
 def on_start(update, context):
 	user = update.message.from_user
-	keyboard = [[KeyboardButton("Public"), KeyboardButton("Anonymous")]]
-	reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=True, resize_keyboard=True)
-
-	update.message.reply_text("Let's create a new bet. First, select the type of bet.", reply_markup=reply_markup)
+	update.message.reply_text("Let's create a new bet. Send the question.", reply_markup=ReplyKeyboardRemove())
 
 	logger.info("User %s started.", user.first_name)
 
-	return TYPE
-
-def on_type(update, context):
-	user = update.message.from_user
-	mode = False
-	if (update.message.text == 'Public'):
-		mode = True
-
-	logger.info("User %s selected mode %s.", user.first_name, update.message.text)
-
-	context.user_data['current_mode'] = mode
-	update.message.reply_text("Good. Now what is the pari?")
 	return BET_QUESTION
 
 def on_bet_question(update, context):
 	user = update.message.from_user
 	bet_question = update.message.text
-	
-	mode = context.user_data['current_mode']
 
-	update.message.reply_text("Creating a new bet: '%s'." % bet_question)
+	update.message.reply_markdown("Creating a new bet: *%s*." % bet_question, reply_markup=ReplyKeyboardRemove())
 
-	bet_hash = bets.add(Bet(bet_question=bet_question, mode=mode))
-	
+	bet_hash = bets.add(Bet(bet_question=bet_question))
 	if 'bets' in context.user_data:
 		context.user_data['bets'].append(bet_hash)
 	else:
 		context.user_data['bets'] = [bet_hash]
 
 	context.user_data['current_bet'] = bet_hash
-
 	logger.info("User %s created a new bet: %s.", user.first_name,bet_question)
-
 	reply_markup = ReplyKeyboardMarkup.from_column(['Exact date', 'Shift'], one_time_keyboard=True, resize_keyboard=True)
 	update.message.reply_text("Cool! Now create a dealine for betting. \nDo you want to enter your the exact date? Or do you want to shift by some time from today?", reply_markup=reply_markup)
 	return DEADLINE
 
 def on_deadline(update, context):
 	if update.message.text == 'Exact date':
-		update.message.reply_text('Send date in a way: DD MM YYYY.')
+		update.message.reply_text('Send date in a way: DD MM YYYY.', reply_markup=ReplyKeyboardRemove())
 		return DEADLINE_EXACT
 	else: # update.message.text == 'Shift':
-		update.message.reply_text('Send what parameters do you want to shift and a relative number. You may choose one the following parameters: weeks, years, days, hours, seconds, minutes, months. For example: weeks 1.')
+		update.message.reply_text('Send what parameters do you want to shift and a relative number. You may choose one the following parameters: weeks, years, days, hours, seconds, minutes, months. For example: weeks 1.', reply_markup=ReplyKeyboardRemove())
 		context.user_data['shift'] = dict()
 		return DEADLINE_SHIFT
 
@@ -75,14 +55,14 @@ def on_deadline_exact(update, context):
 		update.message.reply_text('Something went wrong. Try again entering the deadline.', reply_markup=reply_markup)
 		return DEADLINE
 
-	update.message.reply_text('The deadline was succesfully set up to %s. \nToday is %s.\nNow send the first variant of the reply.' % (bet.deadline.format('DD:MM:YYYY HH:mm ZZ'), bet.start.format('DD:MM:YYYY HH:mm ZZ')))
+	update.message.reply_text('The deadline was succesfully set up on %s. \nToday is %s.\nNow send the first variant of the reply.' % (bet.deadline.format('DD:MM:YYYY HH:mm ZZ'), bet.start.format('DD:MM:YYYY HH:mm ZZ')), reply_markup=ReplyKeyboardRemove())
 	return LOOP
 
 def on_deadline_shift(update, context):
 	key, shift = update.message.text.split()
 	context.user_data['shift'][key] = int(shift)
-
-	update.message.reply_text('Any more? Send /done to stop me asking.')
+	
+	update.message.reply_text('Any more? Send /done to stop me asking.', reply_markup=ReplyKeyboardRemove())
 	return DEADLINE_SHIFT
 
 def on_end_deadline_shift(update, context):
@@ -109,7 +89,7 @@ def on_loop(update, context):
 	else:
 		context.user_data['variants'] = [variant]
 
-	update.message.reply_text('Any more? Send /done to stop me asking.')
+	update.message.reply_text('Any more? Send /done to stop me asking.', reply_markup=ReplyKeyboardRemove())
 	return LOOP
 
 def on_end_loop(update, context):
@@ -120,7 +100,7 @@ def on_end_loop(update, context):
 
 	logger.info("User %s finished adding new variants to a bet: %s.", user.first_name, bets.table[bet_hash].question)
 
-	update.message.reply_text('You may find your bet by /view_%s.' % bet_hash)
+	update.message.reply_text('You may find your bet by /view_%s.' % bet_hash, reply_markup=ReplyKeyboardRemove())
 
 	# free up for the next bet
 	clean_up(update, context)

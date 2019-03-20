@@ -56,20 +56,15 @@ def on_bet_by_variant(update, context):
 	return SUM
 
 
-def on_view(update, context):
-	user = update.message.from_user
-	view_command = update.message.text
-	bet_hash = view_command.split('_')[1]
+def callback_query_handler(update, context):
+	query = update.callback_query
 
-	if bet_hash not in bets.table:
-		update.message.reply_text('The bet does not exist.')
-		return ConversationHandler.END
+	if send_bet_button in query.data:
+		context.user_data['current_variant'], context.user_data['current_betting'] = query.data.split(send_bet_button)[1].split(send_bet_hash)
+		
+		query.answer("Now send the amount of money you want to bet.")
 
-	context.user_data['current_betting'] = bet_hash
-
-	send_bet(update, context, bet_hash)
-
-	return SUM
+		return SUM
 
 
 def on_bet_by_sum(update, context):

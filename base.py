@@ -25,12 +25,11 @@ def main():
 	create_bet_handler = ConversationHandler(
 		entry_points=[CommandHandler('start', on_start)],
 		states={
-			TYPE: [MessageHandler(Filters.regex(r'(Public|Anonymous)$'), on_type)],
 			BET_QUESTION: [MessageHandler(Filters.text, on_bet_question)], 
 			DEADLINE: [MessageHandler(Filters.regex(r'(Exact date|Shift)$'), on_deadline)], 
 
 			DEADLINE_EXACT: [MessageHandler(Filters.text, on_deadline_exact)], 
-			DEADLINE_SHIFT: [MessageHandler(Filters.text, on_deadline_shift), CommandHandler('done', on_end_deadline_shift)], 
+			DEADLINE_SHIFT: [MessageHandler(Filters.regex(r'(weeks|days|years|hours|minutes) -{0,1}[0-9]{1,4}'), on_deadline_shift), CommandHandler('done', on_end_deadline_shift)], 
 			LOOP: [MessageHandler(Filters.text, on_loop), 
 				  CommandHandler('done', on_end_loop)]
 		},
@@ -39,8 +38,8 @@ def main():
 	dp.add_handler(create_bet_handler)
 
 	bet_money_handler = ConversationHandler(
-		entry_points=[CommandHandler('bet', on_bet), 
-					MessageHandler(Filters.regex(r"/view_[a-z0-9]{8}$"), on_view)],
+		entry_points=[CommandHandler('bet', on_bet),
+			CallbackQueryHandler(callback_query_handler)],
 		states={
 			HASH: [MessageHandler(Filters.regex(r'[a-z0-9]{8}$'), on_bet_by_hash)],
 			VARIANT: [MessageHandler(Filters.text, on_bet_by_variant)],
@@ -52,11 +51,11 @@ def main():
 
 	dp.add_handler(CommandHandler("help", help))
 	dp.add_handler(CommandHandler("my_bets", my_bets))
+	dp.add_handler(MessageHandler(Filters.regex(r"/view_[a-z0-9]{8}$"), on_view))
 
-
-	dp.add_handler(CallbackQueryHandler(on_view_of_bet_button))
 	dp.add_handler(InlineQueryHandler(inlinequery))
-
+	#dp.add_handler(CallbackQueryHandler(callback_query_handler))
+	#dp.add_handler()
 
 	dp.add_error_handler(error)
 
@@ -74,6 +73,6 @@ if __name__ == '__main__':
 
 # TODO: answer to button click should be a msg (in on_view_of_bet_button)
 
-# TODO: check inline query 
+# TODO: add button to inline query 
 
 # TODO: add button to bets menu -- to create a new one 

@@ -27,8 +27,7 @@ class Bet_table:
 
 class Bet:
 	# add time limit  
-	def __init__(self, bet_question='', mode=False, variants=[]):
-		self.mode = mode
+	def __init__(self, bet_question='', variants=[]):
 		self.question = bet_question
 		self.variants = variants
 		# money_table = {variant[str] : {user_id[int] : amount[int]}}
@@ -100,5 +99,10 @@ class Bet:
 	def check_deadline(self):
 		return arrow.now() < self.deadline
 
+	def check_time(key, time):
+		try:
+			tr = arrow.utcnow().shift(key, time)
+		except:
+			return False
 
 bets = Bet_table()
