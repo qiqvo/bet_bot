@@ -7,6 +7,7 @@ from telegram.utils import *
 
 from bot_logging import *
 from Bet import *
+from commands import *
 
 HASH, VARIANT, SUM = range(3)
 
@@ -54,6 +55,23 @@ def on_bet_by_variant(update, context):
 	update.message.reply_text("Now send the amount of money you want to bet.")
 	return SUM
 
+
+def on_view(update, context):
+	user = update.message.from_user
+	view_command = update.message.text
+	bet_hash = view_command.split('_')[1]
+
+	if bet_hash not in bets.table:
+		update.message.reply_text('The bet does not exist.')
+		return ConversationHandler.END
+
+	context.user_data['current_betting'] = bet_hash
+
+	send_bet(update, context, bet_hash)
+
+	return SUM
+
+
 def on_bet_by_sum(update, context):
 	user = update.message.from_user
 	bet_hash = context.user_data['current_betting']
@@ -65,4 +83,8 @@ def on_bet_by_sum(update, context):
 
 	update.message.reply_text("Your bet has been taken. Now it is %i for the variant %s." % (bet.money_table[variant][user.id], variant))
 
+	# free up for the next bet
+	clean_up(update, context)
+
 	return ConversationHandler.END
+

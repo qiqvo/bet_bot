@@ -28,13 +28,26 @@ class Bet:
 		self.variants = variants
 		# money_table = {variant[str] : {user_id[int] : amount[int]}}
 		self.money_table = dict()
-		# all bets 
+		# all money 
 		self.montant = 0
 
 		# default shift by 1 week
 		self.start = arrow.utcnow()
 		self.deadline = self.start.shift(weeks=+1)
 
+	def set_deadline_with_shift(self, shifts):
+		try:
+			self.deadline = arrow.utcnow().shift(**shifts)
+			return True
+		except:
+			return False
+
+	def set_deadline_with_exact(self, date):
+		try:
+			self.deadline = arrow.get(date + ' 12', 'DD MM YYYY HH')
+			return True
+		except:
+			return False
 
 	def set_variants(self, variants):
 		self.variants = variants
@@ -57,11 +70,25 @@ class Bet:
 		return self.modifiers
 
 	def short_info(self):
-		info = self.question + '\n'
+		info = '*' + self.question + '*\n'
 		info += 'The deadline passes ' + self.deadline.humanize() + '.\n'
-		info += 'It began ' + self.start.humanize() + '.\n'.
-		info += 'The bets are: '
-		info += '. \n'.join([str(i + 1) + ') ' + variants[i] + ' -- ' + len(self.money_table[variants[i]]) + ' votes  -- ' + sum(self.money_table[variants[i]].values()) for i in range(len(self.variants))])
+
+		return info
+
+	def long_info(self):
+		info = self.short_info()
+		info += 'On exactly ' + self.deadline.format() + '.\n'
+		info += 'It began ' + self.start.humanize() + '.\n'
+		info += 'The bets are:\n'
+
+		i = 1
+		l_vs = []
+		for v in self.variants:
+			l_vs.append(str(i) + ') ' + v + ' -- ' + str(len(self.money_table[v])) + ' votes  -- ' + 'totaling: ' + str(sum(self.money_table[v].values())))
+			i += 1
+
+		info += '.\n'.join(l_vs)
+		info += '.\n'
 
 		return info
 

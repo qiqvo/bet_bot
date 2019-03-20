@@ -7,8 +7,9 @@ from telegram.utils import *
 
 from bot_logging import *
 from Bet import *
+from commands import *
 
-TYPE, BET_QUESTION, LOOP = range(3)
+TYPE, BET_QUESTION, DEADLINE, DEADLINE_EXACT, DEADLINE_SHIFT, LOOP = range(6)
 
 def on_start(update, context):
 	user = update.message.from_user
@@ -51,8 +52,49 @@ def on_bet_question(update, context):
 	context.user_data['current_bet'] = bet_hash
 
 	logger.info("User %s created a new bet: %s.", user.first_name,bet_question)
-	
-	update.message.reply_text("Cool! What is the first answer?")
+
+	reply_markup = ReplyKeyboardMarkup.from_column(['Exact date', 'Shift'], one_time_keyboard=True, resize_keyboard=True)
+	update.message.reply_text("Cool! Now create a dealine for betting. \nDo you want to enter your the exact date? Or do you want to shift by some time from today?", reply_markup=reply_markup)
+	return DEADLINE
+
+def on_deadline(update, context):
+	if update.message.text == 'Exact date':
+		update.message.reply_text('Send date in a way: DD MM YYYY.')
+		return DEADLINE_EXACT
+	else: # update.message.text == 'Shift':
+		update.message.reply_text('Send what parameters do you want to shift and a relative number. You may choose one the following parameters: weeks, years, days, hours, seconds, minutes, months. For example: weeks 1.')
+		context.user_data['shift'] = dict()
+		return DEADLINE_SHIFT
+
+def on_deadline_exact(update, context):
+	date = update.message.text
+	bet_hash = context.user_data['current_bet']
+	bet = bets.table[bet_hash]
+	if not bet.set_deadline_with_exact(date):
+		reply_markup = ReplyKeyboardMarkup.from_column(['Exact date', 'Shift'], one_time_keyboard=True, resize_keyboard=True)
+		update.message.reply_text('Something went wrong. Try again entering the deadline.', reply_markup=reply_markup)
+		return DEADLINE
+
+	update.message.reply_text('The deadline was succesfully set up to %s. \nToday is %s.\nNow send the first variant of the reply.' % (bet.deadline.format('DD:MM:YYYY HH:mm ZZ'), bet.start.format('DD:MM:YYYY HH:mm ZZ')))
+	return LOOP
+
+def on_deadline_shift(update, context):
+	key, shift = update.message.text.split()
+	context.user_data['shift'][key] = int(shift)
+
+	update.message.reply_text('Any more? Send /done to stop me asking.')
+	return DEADLINE_SHIFT
+
+def on_end_deadline_shift(update, context):
+	shift = context.user_data['shift']
+	bet_hash = context.user_data['current_bet']
+	bet = bets.table[bet_hash]
+	if not bet.set_deadline_with_shift(shift):
+		reply_markup = ReplyKeyboardMarkup.from_column(['Exact date', 'Shift'], one_time_keyboard=True, resize_keyboard=True)
+		update.message.reply_text('Something went wrong. Try again entering the deadline.', reply_markup=reply_markup)
+		return DEADLINE
+
+	update.message.reply_text('The deadline was succesfully set up to %s. \nToday is %s.\nNow send the first variant of the reply.' % (bet.deadline.format('DD:MM:YYYY HH:mm ZZ'), bet.start.format('DD:MM:YYYY HH:mm ZZ')))
 	return LOOP
 
 def on_loop(update, context):
@@ -68,7 +110,6 @@ def on_loop(update, context):
 		context.user_data['variants'] = [variant]
 
 	update.message.reply_text('Any more? Send /done to stop me asking.')
-
 	return LOOP
 
 def on_end_loop(update, context):
@@ -82,9 +123,7 @@ def on_end_loop(update, context):
 	update.message.reply_text('You may find your bet by /view_%s.' % bet_hash)
 
 	# free up for the next bet
-	del context.user_data['variants']
-	del context.user_data['current_bet']
-	del context.user_data['current_mode']
+	clean_up(update, context)
 
 	return ConversationHandler.END
 
