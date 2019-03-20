@@ -1,5 +1,7 @@
 import binascii
+import random
 import arrow
+
 
 def hashing_string(a):
 	return hex(binascii.crc32(bytes(a, 'utf-8')))[2:]
@@ -13,10 +15,13 @@ class Bet_table:
 		self.table = dict()
 		# how many bets. counter is then hashed by crc32
 		self.counter = 1
+		self.current_hash = hashing_int(random.randint(1, 100000))
 
 	def add(self, Bet):
+		bet_hash = hashing_string(str(int(self.current_hash, 16) + 1))
+		self.current_hash = bet_hash
 		self.counter += 1
-		bet_hash = hashing_int(self.counter)
+
 		self.table[bet_hash] = Bet
 		return bet_hash
 
