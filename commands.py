@@ -71,21 +71,20 @@ def cancel(update, context):
 def inlinequery(update, context):
 	"""Handle the inline query."""
 	query = update.inline_query.query
-	if 'bets' not in context.user_data:
-		return 
 
 	results = []
-	for bet_hash in context.user_data['bets']:
-		bet = bets.table[bet_hash]
-		reply_markup = InlineKeyboardMarkup.from_column([InlineKeyboardButton(variant, callback_data=send_bet_button+variant+send_bet_hash+bet_hash) for variant in bet.variants])
-		text = InputTextMessageContent(bet.long_info() + '\nDo you want to bet on something?\n')
+	if 'bets' in context.user_data:
+		for bet_hash in context.user_data['bets']:
+			bet = bets.table[bet_hash]
+			reply_markup = InlineKeyboardMarkup.from_column([InlineKeyboardButton(variant, callback_data=send_bet_button+variant+send_bet_hash+bet_hash) for variant in bet.variants])
+			text = InputTextMessageContent(bet.long_info() + '\nDo you want to bet on something?\n')
 
-		results.append(InlineQueryResultArticle(
-			id=uuid4(),
-			title=bet.question,
-			input_message_content=text,
-			reply_markup=reply_markup,
-			parse_mode=ParseMode.MARKDOWN))
+			results.append(InlineQueryResultArticle(
+				id=uuid4(),
+				title=bet.question,
+				input_message_content=text,
+				reply_markup=reply_markup,
+				parse_mode=ParseMode.MARKDOWN))
 
 	update.inline_query.answer(results=results, switch_pm_text='create new bet', switch_pm_parameter='dumb_parameter') 
 

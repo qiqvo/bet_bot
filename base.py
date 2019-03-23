@@ -73,6 +73,4 @@ if __name__ == '__main__':
 
 # TODO: answer to button click should be a msg (in on_view_of_bet_button)
 
-# TODO: add button to inline query 
-
 # TODO: add button to bets menu -- to create a new one 
