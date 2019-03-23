@@ -26,10 +26,13 @@ def main():
 		entry_points=[CommandHandler('start', on_start)],
 		states={
 			BET_QUESTION: [MessageHandler(Filters.text, on_bet_question)], 
+			
 			DEADLINE: [MessageHandler(Filters.regex(r'(Exact date|Shift)$'), on_deadline)], 
 
 			DEADLINE_EXACT: [MessageHandler(Filters.text, on_deadline_exact)], 
-			DEADLINE_SHIFT: [MessageHandler(Filters.regex(r'(weeks|days|years|hours|minutes) -{0,1}[0-9]{1,4}'), on_deadline_shift), CommandHandler('done', on_end_deadline_shift)], 
+
+			DEADLINE_SHIFT: [MessageHandler(Filters.text, on_deadline_shift), CommandHandler('done', on_end_deadline_shift)], 
+			
 			LOOP: [MessageHandler(Filters.text, on_loop), 
 				  CommandHandler('done', on_end_loop)]
 		},
@@ -42,8 +45,11 @@ def main():
 			CallbackQueryHandler(callback_query_handler)],
 		states={
 			HASH: [MessageHandler(Filters.regex(r'[a-z0-9]{8}$'), on_bet_by_hash)],
+			
 			VARIANT: [MessageHandler(Filters.text, on_bet_by_variant)],
-			SUM: [MessageHandler(Filters.regex(r'[0-9]{1,10}$'), on_bet_by_sum)],
+			
+			SUM: [MessageHandler(Filters.regex(r'[0-9]{1,10}$'), on_bet_by_sum),
+			CallbackQueryHandler(callback_query_handler)],
 		},
 		fallbacks=[CommandHandler('cancel', cancel)]
 	)
@@ -70,7 +76,5 @@ if __name__ == '__main__':
 # TODO: edit help msg
 
 # TODO: update result and other functional button to the view menu 
-
-# TODO: answer to button click should be a msg (in on_view_of_bet_button)
 
 # TODO: add button to bets menu -- to create a new one 

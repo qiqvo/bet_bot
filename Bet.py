@@ -32,6 +32,7 @@ class Bet:
 		self.variants = variants
 		# money_table = {variant[str] : {user_id[int] : amount[int]}}
 		self.money_table = dict()
+		self.modifiers = dict()
 		# all money 
 		self.montant = 0
 
@@ -69,7 +70,11 @@ class Bet:
 
 	def calculate_modifiers(self):
 		for variant in self.variants:
-			self.modifiers[variant] = self.montant / self.money_table[variant]
+			b = sum(self.money_table[variant].values())
+			if b != 0:
+				self.modifiers[variant] = self.montant / b
+			else:
+				self.modifiers[variant] = 'inf'
 
 		return self.modifiers
 
@@ -88,11 +93,14 @@ class Bet:
 		i = 1
 		l_vs = []
 		for v in self.variants:
-			l_vs.append(str(i) + ') ' + v + ' -- ' + str(len(self.money_table[v])) + ' votes  -- ' + 'totaling: ' + str(sum(self.money_table[v].values())))
+			l_vs.append(str(i) + ') __' + v + '__ — ' + str(len(self.money_table[v])) + ' votes  — ' + 'totaling: ' + str(sum(self.money_table[v].values()))) 
 			i += 1
 
-		info += '.\n'.join(l_vs)
-		info += '.\n'
+		info += '.\n\n'.join(l_vs)
+		info += '.\n\n'
+
+		self.calculate_modifiers()
+		info += 'The bet modifiers are: ' + ' : '.join(["%.3f" % v for v in self.modifiers.values()]) + '.'
 
 		return info
 

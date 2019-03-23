@@ -1,5 +1,6 @@
 import logging
 from uuid import uuid4
+import re
 
 from telegram import *
 from telegram.ext import *
@@ -42,7 +43,7 @@ def on_deadline(update, context):
 		update.message.reply_text('Send date in a way: DD MM YYYY.', reply_markup=ReplyKeyboardRemove())
 		return DEADLINE_EXACT
 	else: # update.message.text == 'Shift':
-		update.message.reply_text('Send what parameters do you want to shift and a relative number. You may choose one the following parameters: weeks, years, days, hours, seconds, minutes, months. For example: weeks 1.', reply_markup=ReplyKeyboardRemove())
+		update.message.reply_text('Postpone for weeks, years, days, hours, seconds, minutes, months. For example: in 1 week.', reply_markup=ReplyKeyboardRemove())
 		context.user_data['shift'] = dict()
 		return DEADLINE_SHIFT
 
@@ -59,9 +60,16 @@ def on_deadline_exact(update, context):
 	return LOOP
 
 def on_deadline_shift(update, context):
-	key, shift = update.message.text.split()
-	context.user_data['shift'][key] = int(shift)
-	
+	num_param_regex = re.compile(r'([0-9]+) (day|week|year|hour|minute|second)s?')
+
+	try:
+		shift, key = num_param_regex.search(update.message.text).groups()
+		key += 's'
+		context.user_data['shift'][key] = int(shift)
+	except:
+		update.message.reply_text('Something wrong. Try "in 3 days"')
+		return DEADLINE_SHIFT
+
 	update.message.reply_text('Any more? Send /done to stop me asking.', reply_markup=ReplyKeyboardRemove())
 	return DEADLINE_SHIFT
 
@@ -69,6 +77,8 @@ def on_end_deadline_shift(update, context):
 	shift = context.user_data['shift']
 	bet_hash = context.user_data['current_bet']
 	bet = bets.table[bet_hash]
+
+	logger.info(";; %s %i", list(shift.items())[0][0], list(shift.items())[0][1])
 	if not bet.set_deadline_with_shift(shift):
 		reply_markup = ReplyKeyboardMarkup.from_column(['Exact date', 'Shift'], one_time_keyboard=True, resize_keyboard=True)
 		update.message.reply_text('Something went wrong. Try again entering the deadline.', reply_markup=reply_markup)
