@@ -10,26 +10,39 @@ from Bet import *
 from bot_logging import *
 
 send_bet_button = 'SEND_BET_BUTTON'
-send_bet_hash = 'SEND_BET_HASH'
 
 def help(update, context):
 	"""Send a message when the command /help is issued."""
 	update.message.reply_text('Help!')
 
-def send_bet(update, context, bet_hash):
+def create_buttons_keyboard(bet_hash):
 	bet = bets.table[bet_hash]
+	keyboard = []
+	for variant in bet.variants:
+		callback_data = send_bet_button + bet_hash + '$|`' + variant + '$|`'
+		bttns = [InlineKeyboardButton(am, callback_data=callback_data + am) \
+					for am in ['0', '1', '10', '100']]
+		bttns[0].text = variant
+		keyboard.append(bttns)
+		
+	reply_markup = InlineKeyboardMarkup(keyboard)
+	return reply_markup	
 
-	keyboard = [InlineKeyboardButton(variant, callback_data=send_bet_button+variant+send_bet_hash+bet_hash) for variant in bet.variants]
-	reply_markup = InlineKeyboardMarkup.from_column(keyboard)
+def send_bet(update, context, bet_hash):
+	if bet_hash not in bets.table:
+		update.message.reply_text('There is no such bet.')
 
-	info = bet.long_info()
+	reply_markup = create_buttons_keyboard(bet_hash)
+
+	info = bets.table[bet_hash].long_info()
 	info += '\nDo you want to bet on something?\n'
 
 	update.message.reply_markdown(info, reply_markup=reply_markup)
 
 def my_bets(update, context):
 	if 'bets' not in context.user_data:
-		update.message.reply_markdown('No bets yet.', reply_markup=ReplyKeyboardRemove())
+		update.message.reply_markdown('No bets yet.',\
+			reply_markup=ReplyKeyboardRemove())
 
 	i = 1
 	msg = ''
@@ -62,7 +75,8 @@ def clean_up(update, context):
 def cancel(update, context):
 	user = update.message.from_user
 	logger.info("User %s canceled the conversation.", user.first_name)
-	update.message.reply_text('Bye! I hope we can talk again some day.', reply_markup=ReplyKeyboardRemove())
+	update.message.reply_text('Bye! I hope we can talk\
+		 again some day.', reply_markup=ReplyKeyboardRemove())
 
 	clean_up(update, context)
 
@@ -76,17 +90,20 @@ def inlinequery(update, context):
 	if 'bets' in context.user_data:
 		for bet_hash in context.user_data['bets']:
 			bet = bets.table[bet_hash]
-			reply_markup = InlineKeyboardMarkup.from_column([InlineKeyboardButton(variant, callback_data=send_bet_button+variant+send_bet_hash+bet_hash) for variant in bet.variants])
-			text = InputTextMessageContent(bet.long_info() + '\nDo you want to bet on something?\n')
+			reply_markup = create_buttons_keyboard(bet_hash)
+			text = InputTextMessageContent(bet.long_info() + \
+				'\nDo you want to bet on something?\n', \
+				parse_mode=ParseMode.MARKDOWN)
 
 			results.append(InlineQueryResultArticle(
 				id=uuid4(),
 				title=bet.question,
 				input_message_content=text,
-				reply_markup=reply_markup,
-				parse_mode=ParseMode.MARKDOWN))
+				reply_markup=reply_markup))
 
-	update.inline_query.answer(results=results, switch_pm_text='create new bet', switch_pm_parameter='dumb_parameter') 
+	update.inline_query.answer(results=results, \
+		switch_pm_text='create new bet', \
+		switch_pm_parameter='dumb_parameter') 
 
 
 def error(update, context):
