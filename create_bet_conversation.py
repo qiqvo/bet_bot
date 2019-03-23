@@ -10,7 +10,7 @@ from bot_logging import *
 from Bet import *
 from commands import *
 
-BET_QUESTION, DEADLINE, DEADLINE_EXACT, DEADLINE_SHIFT, LOOP = range(5)
+BET_QUESTION, ANSWER_LOOP, DEADLINE_SHIFT = range(3)
 
 def on_start(update, context):
 	user = update.message.from_user
@@ -34,58 +34,8 @@ def on_bet_question(update, context):
 
 	context.user_data['current_bet'] = bet_hash
 	logger.info("User %s created a new bet: %s.", user.first_name,bet_question)
-	reply_markup = ReplyKeyboardMarkup.from_column(['Exact date', 'Shift'], one_time_keyboard=True, resize_keyboard=True)
-	update.message.reply_text("Cool! Now create a dealine for betting. \nDo you want to enter your the exact date? Or do you want to shift by some time from today?", reply_markup=reply_markup)
-	return DEADLINE
-
-def on_deadline(update, context):
-	if update.message.text == 'Exact date':
-		update.message.reply_text('Send date in a way: DD MM YYYY.', reply_markup=ReplyKeyboardRemove())
-		return DEADLINE_EXACT
-	else: # update.message.text == 'Shift':
-		update.message.reply_text('Postpone for weeks, years, days, hours, seconds, minutes, months. For example: in 1 week.', reply_markup=ReplyKeyboardRemove())
-		context.user_data['shift'] = dict()
-		return DEADLINE_SHIFT
-
-def on_deadline_exact(update, context):
-	date = update.message.text
-	bet_hash = context.user_data['current_bet']
-	bet = bets.table[bet_hash]
-	if not bet.set_deadline_with_exact(date):
-		reply_markup = ReplyKeyboardMarkup.from_column(['Exact date', 'Shift'], one_time_keyboard=True, resize_keyboard=True)
-		update.message.reply_text('Something went wrong. Try again entering the deadline.', reply_markup=reply_markup)
-		return DEADLINE
-
-	update.message.reply_text('The deadline was succesfully set up on %s. \nToday is %s.\nNow send the first variant of the reply.' % (bet.deadline.format('DD:MM:YYYY HH:mm ZZ'), bet.start.format('DD:MM:YYYY HH:mm ZZ')), reply_markup=ReplyKeyboardRemove())
-	return LOOP
-
-def on_deadline_shift(update, context):
-	num_param_regex = re.compile(r'([0-9]+) (day|week|year|hour|minute|second)s?')
-
-	try:
-		shift, key = num_param_regex.search(update.message.text).groups()
-		key += 's'
-		context.user_data['shift'][key] = int(shift)
-	except:
-		update.message.reply_text('Something wrong. Try "in 3 days"')
-		return DEADLINE_SHIFT
-
-	update.message.reply_text('Any more? Send /done to stop me asking.', reply_markup=ReplyKeyboardRemove())
-	return DEADLINE_SHIFT
-
-def on_end_deadline_shift(update, context):
-	shift = context.user_data['shift']
-	bet_hash = context.user_data['current_bet']
-	bet = bets.table[bet_hash]
-
-	logger.info(";; %s %i", list(shift.items())[0][0], list(shift.items())[0][1])
-	if not bet.set_deadline_with_shift(shift):
-		reply_markup = ReplyKeyboardMarkup.from_column(['Exact date', 'Shift'], one_time_keyboard=True, resize_keyboard=True)
-		update.message.reply_text('Something went wrong. Try again entering the deadline.', reply_markup=reply_markup)
-		return DEADLINE
-
-	update.message.reply_text('The deadline was succesfully set up to %s. \nToday is %s.\nNow send the first variant of the reply.' % (bet.deadline.format('DD:MM:YYYY HH:mm ZZ'), bet.start.format('DD:MM:YYYY HH:mm ZZ')))
-	return LOOP
+	update.message.reply_text("Cool! Now send me lots.")
+	return ANSWER_LOOP
 
 def on_loop(update, context):
 	user = update.message.from_user
@@ -99,8 +49,8 @@ def on_loop(update, context):
 	else:
 		context.user_data['variants'] = [variant]
 
-	update.message.reply_text('Any more? Send /done to stop me asking.', reply_markup=ReplyKeyboardRemove())
-	return LOOP
+	update.message.reply_text('Any more variants? Send /done to stop me asking.', reply_markup=ReplyKeyboardRemove())
+	return ANSWER_LOOP
 
 def on_end_loop(update, context):
 	user = update.message.from_user
@@ -110,10 +60,36 @@ def on_end_loop(update, context):
 
 	logger.info("User %s finished adding new variants to a bet: %s.", user.first_name, bets.table[bet_hash].question)
 
+	update.message.reply_text('Postpone for weeks, years, days, hours, seconds, minutes, months. For example: in 1 week. Or backwards: in -3 hours.', reply_markup=ReplyKeyboardRemove())
+	context.user_data['shift'] = dict()
+	
+	return DEADLINE_SHIFT
+
+def on_deadline_shift(update, context):
+	num_param_regex = re.compile(r'(-?[0-9]+) (day|week|year|hour|minute|month|second)s?')
+
+	try:
+		shift, key = num_param_regex.search(update.message.text).groups()
+		key += 's'
+		context.user_data['shift'][key] = int(shift)
+	except:
+		update.message.reply_text('Something wrong. Try for example "in 3 days"')
+		return DEADLINE_SHIFT
+
+	update.message.reply_text('Any more postpones? Send /done to stop me asking.', reply_markup=ReplyKeyboardRemove())
+	return DEADLINE_SHIFT
+
+def on_end_deadline_shift(update, context):
+	shift = context.user_data['shift']
+	bet_hash = context.user_data['current_bet']
+	bet = bets.table[bet_hash]
+
+	logger.info(";; %s %i", list(shift.items())[0][0], list(shift.items())[0][1])
+	if not bet.set_deadline_with_shift(shift):
+		update.message.reply_text('Something went wrong. Try again entering the deadline.')
+		return DEADLINE_SHIFT
+
+	update.message.reply_text('The deadline was succesfully set up to %s. \nToday is %s.\nNow send the first variant of the reply.' % (bet.deadline.format('DD:MM:YYYY HH:mm ZZ'), bet.start.format('DD:MM:YYYY HH:mm ZZ')))
+
 	update.message.reply_text('You may find your bet by /view_%s.' % bet_hash, reply_markup=ReplyKeyboardRemove())
-
-	# free up for the next bet
-	clean_up(update, context)
-
 	return ConversationHandler.END
-

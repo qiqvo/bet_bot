@@ -9,7 +9,7 @@ from telegram.ext import *
 from telegram.utils import *
 
 from create_bet_conversation import *
-from bet_money_on_conversation import *
+from button_conversation import *
 from commands import *
 from Bet import * 
 
@@ -27,33 +27,23 @@ def main():
 		states={
 			BET_QUESTION: [MessageHandler(Filters.text, on_bet_question)], 
 			
-			DEADLINE: [MessageHandler(Filters.regex(r'(Exact date|Shift)$'), on_deadline)], 
-
-			DEADLINE_EXACT: [MessageHandler(Filters.text, on_deadline_exact)], 
+			ANSWER_LOOP: [MessageHandler(Filters.text, on_loop), 
+				  CommandHandler('done', on_end_loop)],
 
 			DEADLINE_SHIFT: [MessageHandler(Filters.text, on_deadline_shift), CommandHandler('done', on_end_deadline_shift)], 
 			
-			LOOP: [MessageHandler(Filters.text, on_loop), 
-				  CommandHandler('done', on_end_loop)]
 		},
 		fallbacks=[CommandHandler('cancel', cancel)]
 	)
 	dp.add_handler(create_bet_handler)
 
-	bet_money_handler = ConversationHandler(
-		entry_points=[CommandHandler('bet', on_bet),
-			CallbackQueryHandler(callback_query_handler)],
-		states={
-			HASH: [MessageHandler(Filters.regex(r'[a-z0-9]{8}$'), on_bet_by_hash)],
-			
-			VARIANT: [MessageHandler(Filters.text, on_bet_by_variant)],
-			
-			SUM: [MessageHandler(Filters.regex(r'[0-9]{1,10}$'), on_bet_by_sum),
-			CallbackQueryHandler(callback_query_handler)],
-		},
-		fallbacks=[CommandHandler('cancel', cancel)]
+	bet_money_button_handler = ConversationHandler(
+		entry_points=[CallbackQueryHandler(callback_query_handler)],
+		fallbacks=[CallbackQueryHandler(callback_query_handler), CommandHandler('cancel', cancel)],
+		states = {},
+		per_message=True
 	)
-	dp.add_handler(bet_money_handler)
+	dp.add_handler(bet_money_button_handler)
 
 	dp.add_handler(CommandHandler("help", help))
 	dp.add_handler(CommandHandler("my_bets", my_bets))
@@ -78,3 +68,5 @@ if __name__ == '__main__':
 # TODO: update result and other functional button to the view menu 
 
 # TODO: add button to bets menu -- to create a new one 
+
+# TODO: add pattern to callbacks https://python-telegram-bot.readthedocs.io/en/latest/telegram.ext.callbackqueryhandler.html?highlight=Handler

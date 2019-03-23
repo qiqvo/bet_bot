@@ -74,7 +74,7 @@ class Bet:
 			if b != 0:
 				self.modifiers[variant] = self.montant / b
 			else:
-				self.modifiers[variant] = 'inf'
+				self.modifiers[variant] = 0
 
 		return self.modifiers
 
@@ -87,20 +87,20 @@ class Bet:
 	def long_info(self):
 		info = self.short_info()
 		info += 'On exactly ' + self.deadline.format() + '.\n'
-		info += 'It began ' + self.start.humanize() + '.\n'
-		info += 'The bets are:\n'
+		info += 'It began ' + self.start.humanize() + '.\n\n'
+		info += 'And the bets are:\n'
 
 		i = 1
 		l_vs = []
 		for v in self.variants:
-			l_vs.append(str(i) + ') __' + v + '__ — ' + str(len(self.money_table[v])) + ' votes  — ' + 'totaling: ' + str(sum(self.money_table[v].values()))) 
+			l_vs.append(str(i) + ') __' + v + '__ — ' + str(len(self.money_table[v])) + ' vote(s)  — ' + 'totaling: ' + str(sum(self.money_table[v].values()))) 
 			i += 1
 
 		info += '.\n\n'.join(l_vs)
 		info += '.\n\n'
 
 		self.calculate_modifiers()
-		info += 'The bet modifiers are: ' + ' : '.join(["%.3f" % v for v in self.modifiers.values()]) + '.'
+		info += 'The bet modifiers are: ' + ' : '.join(['{:.3f}'.format(v) for v in self.modifiers.values()]) + '.'
 
 		return info
 
