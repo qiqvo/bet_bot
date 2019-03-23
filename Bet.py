@@ -80,7 +80,10 @@ class Bet:
 
 	def short_info(self):
 		info = '*' + self.question + '*\n'
-		info += 'The deadline passes ' + self.deadline.humanize() + '.\n'
+		if self.check_deadline():
+			info += 'The deadline passes ' + self.deadline.humanize() + '.\n'
+		else:
+			info += 'Bet was closed.\n'
 
 		return info
 

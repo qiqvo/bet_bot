@@ -37,20 +37,12 @@ def main():
 	)
 	dp.add_handler(create_bet_handler)
 
-	bet_money_button_handler = ConversationHandler(
-		entry_points=[CallbackQueryHandler(callback_query_handler)],
-		fallbacks=[CallbackQueryHandler(callback_query_handler), CommandHandler('cancel', cancel)],
-		states = {},
-		per_message=True
-	)
-	dp.add_handler(bet_money_button_handler)
-
 	dp.add_handler(CommandHandler("help", help))
 	dp.add_handler(CommandHandler("my_bets", my_bets))
 	dp.add_handler(MessageHandler(Filters.regex(r"/view_[a-z0-9]{8}$"), on_view))
 
 	dp.add_handler(InlineQueryHandler(inlinequery))
-	#dp.add_handler(CallbackQueryHandler(callback_query_handler))
+	dp.add_handler(CallbackQueryHandler(callback_query_handler))
 	#dp.add_handler()
 
 	dp.add_error_handler(error)
