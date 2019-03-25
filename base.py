@@ -12,9 +12,7 @@ from create_bet_conversation import *
 from button_conversation import *
 from commands import *
 from Bet import * 
-
 from bot_logging import *
-
 
 def main():
 	token = str(open('TOKEN').read())

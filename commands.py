@@ -6,7 +6,6 @@ from telegram.ext import *
 from telegram.utils import *
 
 from Bet import * 
-
 from bot_logging import *
 
 send_bet_button = 'SEND_BET_BUTTON'

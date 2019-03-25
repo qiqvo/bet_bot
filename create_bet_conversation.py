@@ -92,4 +92,6 @@ def on_end_deadline_shift(update, context):
 	update.message.reply_text('The deadline was succesfully set up to %s. \nToday is %s.' % (bet.deadline.format('DD:MM:YYYY HH:mm ZZ'), bet.start.format('DD:MM:YYYY HH:mm ZZ')))
 
 	update.message.reply_text('You may find your bet by /view_%s.' % bet_hash, reply_markup=ReplyKeyboardRemove())
+
+	clean_up(update, context)
 	return ConversationHandler.END

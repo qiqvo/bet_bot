@@ -81,38 +81,39 @@ class Bet:
 	def short_info(self):
 		info = '*' + self.question + '*\n'
 		if self.check_deadline():
-			info += 'The deadline passes ' + self.deadline.humanize() + '.\n'
+			info += loc_deadline_passes[locale] + self.deadline.humanize() + '.\n'
 		else:
-			info += 'Bet was closed.\n'
+			info += loc_bet_was_closed[locale]
 
 		return info
 
 	def long_info(self):
 		info = self.short_info()
-		info += 'On exactly ' + self.deadline.format() + '.\n'
-		info += 'It began ' + self.start.humanize() + '.\n\n'
-		info += 'And the bets are:\n'
+		info += loc_info_exactly[locale] + self.deadline.format() + '.\n'
+		info += loc_info_began[locale] + self.start.humanize() + '.\n\n'
+		info += loc_info_lots[locale]
 
 		i = 1
 		l_vs = []
 		for v in self.variants:
-			l_vs.append(str(i) + ') __' + v + '__ — ' + str(len(self.money_table[v])) + ' vote(s)  — ' + 'totaling: ' + str(sum(self.money_table[v].values()))) 
+			l_vs.append(str(i) + ') _' + v + '_ — ' + str(len(self.money_table[v])) + loc_info_votes[locale] + '—' + loc_info_totalling[locale] + str(sum(self.money_table[v].values()))) 
 			i += 1
 
 		info += '.\n\n'.join(l_vs)
 		info += '.\n\n'
 
 		self.calculate_modifiers()
-		info += 'The bet modifiers are: ' + ' : '.join(['{:.3f}'.format(v) for v in self.modifiers.values()]) + '.'
+		info += loc_info_modifiers[locale] + ' : '.join(['{:.3f}'.format(v) for v in self.modifiers.values()]) + '.'
 
 		return info
 
 	def check_deadline(self):
 		return arrow.now() < self.deadline
-
+	
+	@staticmethod
 	def check_time(key, time):
 		try:
-			tr = arrow.utcnow().shift(key, time)
+			arrow.now().shift(key, time)
 		except:
 			return False
 
