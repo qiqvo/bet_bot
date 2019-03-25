@@ -2,6 +2,7 @@ import binascii
 import random
 import arrow
 
+from localisation import *
 locale = 'en'
 
 def hashing_string(a):
