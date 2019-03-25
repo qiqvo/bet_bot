@@ -81,9 +81,10 @@ class Bet:
 		return self.modifiers
 
 	def short_info(self):
-		info = '*' + self.question + '*\n'
+		info = '<b>' + self.question + '</b>\n'
 		if self.check_deadline():
-			info += loc_deadline_passes[locale] + self.deadline.humanize() + '.\n'
+			info += loc_deadline_passes[locale] + \
+			self.deadline.humanize() + '.\n'
 		else:
 			info += loc_bet_was_closed[locale]
 
@@ -98,14 +99,18 @@ class Bet:
 		i = 1
 		l_vs = []
 		for v in self.variants:
-			l_vs.append(str(i) + ') _' + v + '_ — ' + str(len(self.money_table[v])) + loc_info_votes[locale] + '—' + loc_info_totalling[locale] + str(sum(self.money_table[v].values()))) 
+			l_vs.append(str(i) + ') <i>' + v + '</i> — ' + \
+				str(len(self.money_table[v])) + loc_info_votes[locale] + \
+				'—' + loc_info_totalling[locale] + \
+				str(sum(self.money_table[v].values()))) 
 			i += 1
 
 		info += '.\n\n'.join(l_vs)
 		info += '.\n\n'
 
 		self.calculate_modifiers()
-		info += loc_info_modifiers[locale] + ' : '.join(['{:.3f}'.format(v) for v in self.modifiers.values()]) + '.'
+		info += loc_info_modifiers[locale] + ' : '.join(['{:.3f}'.format(v) \
+			for v in self.modifiers.values()]) + '.'
 
 		return info
 

@@ -30,7 +30,7 @@ def callback_query_handler(update, context):
 			reply_markup = create_buttons_keyboard(bet_hash)
 			raw_query.edit_message_text(bet.long_info() + \
 				'\nDo you want to bet on something?\n', \
-				parse_mode=ParseMode.MARKDOWN, \
+				parse_mode=ParseMode.HTML, \
 				reply_markup=reply_markup)
 	elif manage_bet_button in raw_query.data:
 		query = raw_query.data.split(manage_bet_button)[1]
@@ -48,6 +48,7 @@ def callback_query_handler(update, context):
 			raw_query.edit_message_reply_markup(reply_markup=reply_markup)
 		elif query == 'delete_delete':
 			raw_query.edit_message_reply_markup(reply_markup=None)
+			context.user_data['bets'].remove(bet_hash)
 			del bets.table[bet_hash]
 		elif query == 'delete_abort':
 			reply_markup = create_manage_keyboard(bet_hash)

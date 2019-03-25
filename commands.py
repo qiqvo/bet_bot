@@ -28,29 +28,31 @@ def create_buttons_keyboard(bet_hash):
 	reply_markup = InlineKeyboardMarkup(keyboard)
 	return reply_markup	
 
-def create_manage_keyboard(bet_hash):
+def create_manage_keyboard(bet_hash, owner=True):
 	bet = bets.table[bet_hash]
 	callback_data = manage_bet_button + bet_hash + '$|`'
 
-	keyboard = [[InlineKeyboardButton('Show lots', callback_data=callback_data + 'show_lots')],
-		[InlineKeyboardButton('Delete', callback_data=callback_data + 'delete'), 
-		InlineKeyboardButton('Close', callback_data=callback_data + 'close')],
-		[InlineKeyboardButton('Publish', switch_inline_query=bet.question)]]
+	keyboard = [[InlineKeyboardButton('Show lots', callback_data=callback_data + 'show_lots')]]
+
+	if owner:
+		keyboard.append([InlineKeyboardButton('Delete', callback_data=callback_data + 'delete'), 
+		InlineKeyboardButton('Close', callback_data=callback_data + 'close')])
+		keyboard.append([InlineKeyboardButton('Publish', switch_inline_query=bet.question)])
 
 	reply_markup = InlineKeyboardMarkup(keyboard)
 	return reply_markup
 
-def send_bet(update, context, bet_hash):
+def send_bet(update, context, bet_hash, owner=True):
 	if bet_hash not in bets.table:
 		update.message.reply_text('There is no such bet.')
 
 	bet = bets.table[bet_hash]
-	reply_markup = create_manage_keyboard(bet_hash)
+	reply_markup = create_manage_keyboard(bet_hash, owner)
 
 	info = bet.long_info()
 	info += '\nDo you want to bet on something?\n'
 
-	update.message.reply_markdown(info, reply_markup=reply_markup)
+	update.message.reply_html(info, reply_markup=reply_markup)
 
 def my_bets(update, context):
 	if 'bets' not in context.user_data:
@@ -62,10 +64,11 @@ def my_bets(update, context):
 	for bet_hash in context.user_data['bets']:
 		bet = bets.table[bet_hash]
 		si = bet.short_info()
+
 		msg += str(i) + ') /view_' + bet_hash + ' ' + si
 		i += 1
 
-	update.message.reply_markdown(msg, reply_markup=ReplyKeyboardRemove())
+	update.message.reply_html(msg, reply_markup=ReplyKeyboardRemove())
 
 
 def clean_up(update, context):
@@ -106,7 +109,7 @@ def inlinequery(update, context):
 			reply_markup = create_buttons_keyboard(bet_hash)
 			text = InputTextMessageContent(bet.long_info() + \
 				'\nDo you want to bet on something?\n', \
-				parse_mode=ParseMode.MARKDOWN)
+				parse_mode=ParseMode.HTML)
 
 			results.append(InlineQueryResultArticle(
 				id=uuid4(),
@@ -133,6 +136,6 @@ def on_view(update, context):
 		update.message.reply_text('The bet does not exist.')
 		return ConversationHandler.END
 
-	context.user_data['current_betting'] = bet_hash
-
-	send_bet(update, context, bet_hash)
+	owner = bet_hash in context.user_data['bets']
+	
+	send_bet(update, context, bet_hash, owner)
