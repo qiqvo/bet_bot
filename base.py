@@ -16,8 +16,8 @@ from Bet import *
 from bot_logging import *
 
 def main():
-	# token = os.environ['TOKEN']
-	token = str(open('TOKEN').read())
+	token = os.environ['TOKEN']
+	# token = str(open('TOKEN').read())
 	updater = Updater(token, use_context=True)
 
 	dp = updater.dispatcher
