@@ -2,6 +2,7 @@ import binascii
 import random
 import arrow
 
+locale = 'en'
 
 def hashing_string(a):
 	return hex(binascii.crc32(bytes(a, 'utf-8')))[2:]
