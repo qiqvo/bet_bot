@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # This program is dedicated to the public domain under the CC0 license.
 import logging
+import os
 from uuid import uuid4
 
 from telegram import *
@@ -15,7 +16,8 @@ from Bet import *
 from bot_logging import *
 
 def main():
-	token = str(open('TOKEN').read())
+	token = os.environ['TOKEN']
+	# token = str(open('TOKEN').read())
 	updater = Updater(token, use_context=True)
 
 	dp = updater.dispatcher
